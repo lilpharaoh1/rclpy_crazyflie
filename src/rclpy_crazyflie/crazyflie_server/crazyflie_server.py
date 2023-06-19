@@ -5,6 +5,7 @@ from .connect_callback_group import ConnectCallbackGroup
 from cflib.crazyflie import Crazyflie
 import cflib.crtp
 from .crazyflie_control import CrazyflieControl
+from .crazyflie_log import CrazyflieLog
 import threading
 
 from std_msgs.msg import String
@@ -45,10 +46,10 @@ class CrazyflieServer(Node):
 
     def _connected(self, link_uri):
         print('Connected to %s.' % (link_uri))
-        # if link_uri not in self._crazyflie_logs:
-        #     log = CrazyflieLog(*self._crazyflies[link_uri])
-        #     self._start_logs(log)
-            # self._crazyflie_logs[link_uri] = log
+        if link_uri not in self._crazyflie_logs:
+            log = CrazyflieLog(*self._crazyflies[link_uri])
+            self._start_logs(log)
+            self._crazyflie_logs[link_uri] = log
         if link_uri not in self._controllers:
             controller = CrazyflieControl(*self._crazyflies[link_uri])
             self._controllers[link_uri] = controller
@@ -61,7 +62,8 @@ class CrazyflieServer(Node):
         """Callback when initial connection fails (i.e. no Crazyflie
         at the specified address)"""
         print('Connection to %s failed: %s' % (link_uri, msg))
-        #self._crazyflies[link_uri][1].open_link(link_uri)
+        # if self.RECONNECT:
+        #     self._crazyflies[link_uri][1].open_link(link_uri)
 
 
     def _connection_lost(self, link_uri, msg):
@@ -89,7 +91,8 @@ class CrazyflieServer(Node):
         node.destroy_node()
 
 
-
+    def _start_logs(self, log):
+        pass
 
 
 def main(args=None):
