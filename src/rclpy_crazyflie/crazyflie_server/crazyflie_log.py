@@ -34,7 +34,7 @@ from cflib.crazyflie.log import LogConfig as cfLogConfig
 
 import rclpy
 from rclpy.node import Node
-from cf_msgs.msg import ControllerRPYRate, ControllerRPYT, KalmanPositionEst, MotorPower, posCtl, Stabilizer
+from cf_msgs.msg import ControllerRPYRate, ControllerRPYT, KalmanPositionEst, MotorPower, PosCtl, Stabilizer
 import json
 
 class CrazyflieLog(Node):
@@ -43,17 +43,25 @@ class CrazyflieLog(Node):
     and publishing log data to ros topics.
     """
 
-    def __init__(self, name, crazyflie):
+    def __init__(self, name, crazyflie, c_rpy_rate=False, c_rpyt=False, \
+                kpe=False, mp=False, pc=False, sta=False, period_ms=100):
         super().__init__(name + '_log')
         self._name = name
         self._cf = crazyflie
-        self._logs = {}
+        self._logs = {
+            'c_rpy_rate' : c_rpy_rate,
+            'c_rpyt' : c_rpyt,
+            'kpe' : kpe,
+            'mp' : mp,
+            'pc' : pc,
+            'sta' : sta
+        }
 
         # Set up log configs for standard log groups
         self._controller_rpy_rate_pub = self.create_publisher(
             ControllerRPYRate,
             self._name + '/ControllerRPYRate',
-            queue_size=100
+            10
         )
         self._controller_rpy_rate_config = cfLogConfig(name='ControllerRPYRate', period_in_ms=100)
         self._controller_rpy_rate_config.data_received_cb.add_callback(self._controller_rpy_rate_cb)
@@ -66,7 +74,7 @@ class CrazyflieLog(Node):
         self._controller_rpyt_pub = self.create_publisher(
             ControllerRPYT,
             self._name + '/ControllerRPYT',
-            queue_size=100
+            10
         )
         self._controller_rpyt_config = cfLogConfig(name='ControllerRPYT', period_in_ms=100)
         self._controller_rpyt_config.data_received_cb.add_callback(self._controller_rpyt_cb)
@@ -79,7 +87,7 @@ class CrazyflieLog(Node):
         self._kalman_position_pub = self.create_publisher(
             KalmanPositionEst,
             self._name + '/KalmanPositionEst',
-            queue_size=100
+            10
         )
         self._kalman_position_config = cfLogConfig(name='KalmanPositionEst', period_in_ms=100)
         self._kalman_position_config.data_received_cb.add_callback(self._kalman_position_cb)
@@ -91,7 +99,7 @@ class CrazyflieLog(Node):
         self._motor_power_pub = self.create_publisher(
             MotorPower,
             self._name + '/MotorPower',
-            queue_size=100
+            10
         )
         self._motor_power_config = cfLogConfig(name='MotorPower', period_in_ms=100)
         self._motor_power_config.data_received_cb.add_callback(self._motor_power_cb)
@@ -102,9 +110,9 @@ class CrazyflieLog(Node):
         self._cf.log.add_config(self._motor_power_config)
 
         self._posCtl_pub = self.create_publisher(
-            posCtl,
+            PosCtl,
             self._name + '/posCtl',
-            queue_size=100
+            10
         )
         self._posCtl_config = cfLogConfig(name='posCtl', period_in_ms=100)
         self._posCtl_config.data_received_cb.add_callback(self._pos_ctl_cb)
@@ -119,7 +127,7 @@ class CrazyflieLog(Node):
         self._stabilizer_pub = self.create_publisher(
             Stabilizer,
             self._name + '/Stabilizer',
-            queue_size=100
+            10
         )
         self._stabilizer_config = cfLogConfig(name='Stabilizer', period_in_ms=100)
         self._stabilizer_config.data_received_cb.add_callback(self._stabilizer_cb)
@@ -128,6 +136,22 @@ class CrazyflieLog(Node):
         self._stabilizer_config.add_variable('stabilizer.yaw', 'float')
         self._stabilizer_config.add_variable('stabilizer.thrust', 'uint16_t')
         self._cf.log.add_config(self._stabilizer_config)
+
+        self.init_logs(period_ms)
+
+    def init_logs(self, period_ms):
+        if self._logs['c_rpy_rate'] : 
+            self.log_controller_rpy_rate(period_in_ms=period_ms)
+        if self._logs['c_rpyt'] :
+            self.log_controller_rpyt(period_in_ms=period_ms)
+        if self._logs['kpe']:
+            self.log_kalman_position_est(period_in_ms=period_ms)
+        if self._logs['pc']:
+            self.log_pos_ctl(period_in_ms=period_ms)
+        if self._logs['mp']:
+            self.log_motor_power(period_in_ms=period_ms)
+        if self._logs['sta']:
+            self.log_stabilizer(period_in_ms=period_ms)
 
     def _log_error_cb(self, logconf, msg):
         """
@@ -212,7 +236,7 @@ class CrazyflieLog(Node):
     def _controller_rpy_rate_cb(self, timestamp, data, logconfig):
         """ Callback from CrazyflieLibPython, publishes ControllerRPYRate messages """
         msg = ControllerRPYRate()
-        msg.stamp.time = self.get_clock().now()
+        msg.stamp.stamp = self.get_clock().now().to_msg()
         msg.cfstamp = timestamp
         msg.roll_rate = data['controller.rollRate']
         msg.pitch_rate = data['controller.pitchRate']
@@ -222,7 +246,7 @@ class CrazyflieLog(Node):
     def _controller_rpyt_cb(self, timestamp, data, logconfig):
         """ Callback from CrazyflieLibPython, publishes ControllerRPYT messages """
         msg = ControllerRPYT()
-        msg.stamp.time = self.get_clock().now()
+        msg.stamp.stamp = self.get_clock().now().to_msg()
         msg.cfstamp = timestamp
         msg.roll = data['controller.roll']
         msg.pitch = data['controller.pitch']
@@ -233,7 +257,7 @@ class CrazyflieLog(Node):
     def _kalman_position_cb(self, timestamp, data, logconfig):
         """ Callback from CrazyflieLibPython, publishes KalmanPositionEst messages """
         msg = KalmanPositionEst()
-        msg.stamp.time = self.get_clock().now()
+        msg.stamp.stamp = self.get_clock().now().to_msg()
         msg.cfstamp = timestamp
         msg.state_x = data['kalman.stateX']
         msg.state_y = data['kalman.stateY']
@@ -243,7 +267,7 @@ class CrazyflieLog(Node):
     def _motor_power_cb(self, timestamp, data, logconfig):
         """ Callback from CrazyflieLibPython, publishes MotorPower messages """
         msg = MotorPower()
-        msg.stamp.time = self.get_clock().now()
+        msg.stamp.stamp = self.get_clock().now().to_msg()
         msg.cfstamp = timestamp
         msg.m4 = data['motor.m4']
         msg.m1 = data['motor.m1']
@@ -253,8 +277,8 @@ class CrazyflieLog(Node):
 
     def _pos_ctl_cb(self, timestamp, data, logconfig):
         """ Callback from CrazyflieLibPython, publishes posCtl messages """
-        msg = posCtl()
-        msg.stamp.time = self.get_clock().now()
+        msg = PosCtl()
+        msg.stamp.stamp = self.get_clock().now().to_msg()
         msg.cfstamp = timestamp
         msg.target_vx = data['posCtl.targetVX']
         msg.target_vy = data['posCtl.targetVY']
@@ -267,7 +291,7 @@ class CrazyflieLog(Node):
     def _stabilizer_cb(self, timestamp, data, logconfig):
         """ Callback from CrazyflieLibPython, publishes Stabilizer messages """
         msg = Stabilizer()
-        msg.stamp.time = self.get_clock().now()
+        msg.stamp.stamp = self.get_clock().now().to_msg()
         msg.cfstamp = timestamp
         msg.roll = data['stabilizer.roll']
         msg.pitch = data['stabilizer.pitch']

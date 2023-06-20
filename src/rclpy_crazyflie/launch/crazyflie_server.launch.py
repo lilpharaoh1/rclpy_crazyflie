@@ -10,7 +10,15 @@ def generate_launch_description():
             name='server_node',
             parameters=[
                 {
-                'uris': ['radio://0/80/2M/E7E7E7E7E7'],
+                'uris': [
+                    'radio://0/80/2M/E7E7E7E7E7'
+                    ],
+                'log_rpy_rate': True,
+                'log_rpyt': True,
+                'log_kpe': True,
+                'log_pc': True,
+                'log_mp': True,
+                'log_sta': True
                 }
             ])
     ])

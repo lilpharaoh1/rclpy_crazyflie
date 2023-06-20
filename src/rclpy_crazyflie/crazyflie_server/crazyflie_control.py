@@ -51,10 +51,10 @@ class CrazyflieControl(Node):
             self._velocity_control_cb
         )
         
-    def _reset_position_estimator_cb(self, req):
+    def _reset_position_estimator_cb(self, req, response):
         pass
 
-    def _send_hover_setpoint_cb(self, req):
+    def _send_hover_setpoint_cb(self, req, response):
         self.get_logger().info("SendHoverSetpoint called...")
         vx = req.vx
         vy = req.vy
@@ -63,12 +63,14 @@ class CrazyflieControl(Node):
         self._cf.commander.send_hover_setpoint(vx, vy, yaw_rate, z)
         return []
     
-    def _set_param_cb(self, req):
+    def _set_param_cb(self, req, response):
         self._cf.param.set_value(req.param, req.value)
         self.get_logger().info("set %s to %s" % (req.param, req.value))
-        return []
+        response.response = True
+        self.get_logger().info('here...')
+        return response
 
-    def _velocity_control_cb(self, req):
+    def _velocity_control_cb(self, req, response):
         try:
             obj = pickle.loads(req.pickle)
             print(self._mc)

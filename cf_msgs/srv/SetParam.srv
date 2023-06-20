@@ -1,3 +1,4 @@
 string param
 string value
 ---
+bool response

@@ -23,7 +23,7 @@ set(msg_files
   "msg/ControllerRPYT.msg"
   "msg/KalmanPositionEst.msg"
   "msg/MotorPower.msg"
-  "msg/PoseCtl.msg"
+  "msg/PosCtl.msg"
   "msg/Stabilizer.msg"
 )
 
