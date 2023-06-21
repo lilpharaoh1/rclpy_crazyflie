@@ -1,0 +1,13 @@
+{
+    "info" : [
+        {
+            "uri": "radio://0/80/2M/E7E7E7E7E7"
+        }, 
+        {
+            "uri": "radio://0/80/2M/E8E8E8E8E8"
+        },
+        {
+            "uri": "radio://0/80/2M/E9E9E9E9E9"
+        }
+    ]
+}

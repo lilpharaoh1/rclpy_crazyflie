@@ -4,25 +4,27 @@ import launch.substitutions
 import launch_ros.actions
 import json
 
+URIS = [
+    'radio://0/80/2M/E7E7E7E7E7'
+    ]
+
 with open('install/rclpy_crazyflie/share/rclpy_crazyflie/data/uris.json') as f:
     data = json.load(f)
     uris = [agent["uri"] for agent in data["info"]]
     f.close()
 
 def generate_launch_description():
-    return launch.LaunchDescription([
+
+    client_nodes = [
         launch_ros.actions.Node(
-            package='rclpy_crazyflie', executable='server',
-            name='server_node',
+            package='rclpy_crazyflie', executable='client',
+            name='client_node',
             parameters=[
                 {
-                'uris': uris,
-                'log_rpy_rate': True,
-                'log_rpyt': True,
-                'log_kpe': True,
-                'log_pc': True,
-                'log_mp': True,
-                'log_sta': True
+                'uri': uri,
                 }
             ])
-    ])
+    for uri in uris
+    ]   
+
+    return launch.LaunchDescription(client_nodes)
