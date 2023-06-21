@@ -19,7 +19,7 @@ from motion_commander.velocity_primitives import *
 class CrazyflieControl(Node):
     DEFAULT_HEIGHT = 0.3
     
-    def __init__(self, name, crazyflie):
+    def __init__(self, name: str, crazyflie : Crazyflie):
         super().__init__(name + '_control')
         # Instantiate motion commander
         self._cf = crazyflie

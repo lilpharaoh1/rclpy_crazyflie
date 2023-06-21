@@ -11,10 +11,9 @@ import time
 from std_msgs.msg import String, Bool
 
 class CrazyflieServer(Node):
-    CONNECTION_TIME = 3 # s
-    RECONNECT = False
-    RECONNECT_ATTEMPTS = 5 # Try to reconnect this many times
-    RECONNECT_TIMER = 5
+    CONNECTION_PUB_TIME = 1 # s
+    CONNECTION_EST_TIME = 8 # s TODO: Could measure this for optimization
+    RECONNECT = True
 
     def __init__(self):
         super().__init__('server_node')
@@ -35,7 +34,6 @@ class CrazyflieServer(Node):
 
         for uri in self._uris:
             name = uri.split('/')[-1]
-            self.get_logger().info(str(name))
             cf = Crazyflie()
             cf.connected.add_callback(self._connected)
             cf.disconnected.add_callback(self._disconnected)
@@ -45,11 +43,10 @@ class CrazyflieServer(Node):
             self._crazyflies[uri] = [name, cf, 0]
             self._connection_pubs[uri] = self.create_publisher(Bool, name + '/connection', 10)
         
-
-        self._connection_timer = self.create_timer(self.CONNECTION_TIME, self._connection_cb)
+        self._connection_timer = self.create_timer(self.CONNECTION_PUB_TIME, self._connection_cb)
 
     def _connected(self, link_uri):
-        print('Connected to %s.' % (link_uri))
+        self.get_logger().info('Connected to %s.' % (link_uri))
         if link_uri not in self._crazyflie_logs:
             logs = self._unpack_log_params()
             name, uri, _ = self._crazyflies[link_uri]
@@ -76,50 +73,27 @@ class CrazyflieServer(Node):
         self.get_logger().info('Connection to %s failed: %s' % (link_uri, msg))
         self._crazyflies[link_uri][2] = 0
         if self.RECONNECT:
-            self.get_logger().info('Attempting reconnect with %s' % link_uri)
+            time.sleep(self.CONNECTION_EST_TIME)
+            self.get_logger().info(f"Attempting to reconnect with {link_uri}...")
             self._crazyflies[link_uri][1].open_link(link_uri)
-            # for attempt in range(self.RECONNECT_ATTEMPTS):
-            #     try:
-            #         self._crazyflies[link_uri][1].open_link(link_uri)
-            #         break
-            #     except:
-            #         time.sleep(self.RECONNECT_TIMER)
-            #         continue
-
+            if self._crazyflies[link_uri][1] == 2:
+                return
 
     def _connection_lost(self, link_uri, msg):
         """Callback when disconnected after a connection has been made (i.e.
         Crazyflie moves out of range)"""
-        self.get_logger().info('Connection to %s lost : %s' % (link_uri, msg))
-        self._crazyflies[link_uri][2] = 0
-        if self.RECONNECT:
-            self.get_logger().info('Attempting reconnect with %s' % link_uri)
-            self._crazyflies[link_uri][1].open_link(link_uri)
-            # for attempt in range(self.RECONNECT_ATTEMPTS):
-            #     try:
-            #         self._crazyflies[link_uri][1].open_link(link_uri)
-            #         break
-            #     except:
-            #         time.sleep(self.RECONNECT_TIMER)
-            #         continue
-
+        pass
 
     def _disconnected(self, link_uri):
         """Callback when the Crazyflie is disconnected (called in all cases)"""
         self.get_logger().info('Disconnected from %s' % link_uri)
         self._crazyflies[link_uri][2] = 0
         if self.RECONNECT:
-            self.get_logger().info('Attempting reconnect with %s' % link_uri)
+            time.sleep(self.CONNECTION_EST_TIME)
+            self.get_logger().info(f"Attempting to reconnect with {link_uri}...")
             self._crazyflies[link_uri][1].open_link(link_uri)
-            # for attempt in range(1, self.RECONNECT_ATTEMPTS+1):
-                # try:
-                #     self.get_logger().info('Reconnection Attempt %i with %s' % (attempt, link_uri))
-                #     self._crazyflies[link_uri][1].open_link(link_uri)
-                #     self.get_logger().info('Reconnection succeed with %s' % link_uri)
-                #     break
-                # except:
-                #     time.sleep(self.RECONNECT_TIMER)
-                #     continue
+            if self._crazyflies[link_uri][1] == 2:
+                return
 
     def _unpack_log_params(self):
         c_rpy_rate = self.get_parameter('log_rpy_rate').get_parameter_value().bool_value

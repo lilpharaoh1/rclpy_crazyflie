@@ -43,7 +43,7 @@ class CrazyflieLog(Node):
     and publishing log data to ros topics.
     """
 
-    def __init__(self, name, crazyflie, c_rpy_rate=False, c_rpyt=False, \
+    def __init__(self, name : str, crazyflie : Crazyflie, c_rpy_rate=False, c_rpyt=False, \
                 kpe=False, mp=False, pc=False, sta=False, period_ms=100):
         super().__init__(name + '_log')
         self._name = name
