@@ -25,6 +25,8 @@ set(msg_files
   "msg/MotorPower.msg"
   "msg/PosCtl.msg"
   "msg/Stabilizer.msg"
+  "msg/Fly.msg"
+  "msg/FlyStamped.msg"
 )
 
 set(action_files
@@ -32,9 +34,11 @@ set(action_files
 )
 
 set(srv_files
+  "srv/Land.srv"
   "srv/SendHoverSetpoint.srv"
   "srv/ResetPositionEstimator.srv"
   "srv/SetParam.srv"
+  "srv/TakeOff.srv"
   "srv/VelocityControl.srv"
   )
 

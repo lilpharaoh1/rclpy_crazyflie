@@ -3,3 +3,4 @@ float32 vy
 float32 yaw_rate
 float32 z
 ---
+bool response

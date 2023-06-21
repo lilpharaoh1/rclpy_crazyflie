@@ -43,7 +43,7 @@ class CrazyflieLog(Node):
     and publishing log data to ros topics.
     """
 
-    def __init__(self, name, crazyflie, c_rpy_rate=False, c_rpyt=False, \
+    def __init__(self, name : str, crazyflie : Crazyflie, c_rpy_rate=False, c_rpyt=False, \
                 kpe=False, mp=False, pc=False, sta=False, period_ms=100):
         super().__init__(name + '_log')
         self._name = name
@@ -60,7 +60,7 @@ class CrazyflieLog(Node):
         # Set up log configs for standard log groups
         self._controller_rpy_rate_pub = self.create_publisher(
             ControllerRPYRate,
-            self._name + '/ControllerRPYRate',
+            self._name + '/logging/ControllerRPYRate',
             10
         )
         self._controller_rpy_rate_config = cfLogConfig(name='ControllerRPYRate', period_in_ms=100)
@@ -73,7 +73,7 @@ class CrazyflieLog(Node):
 
         self._controller_rpyt_pub = self.create_publisher(
             ControllerRPYT,
-            self._name + '/ControllerRPYT',
+            self._name + '/logging/ControllerRPYT',
             10
         )
         self._controller_rpyt_config = cfLogConfig(name='ControllerRPYT', period_in_ms=100)
@@ -86,7 +86,7 @@ class CrazyflieLog(Node):
 
         self._kalman_position_pub = self.create_publisher(
             KalmanPositionEst,
-            self._name + '/KalmanPositionEst',
+            self._name + '/logging/KalmanPositionEst',
             10
         )
         self._kalman_position_config = cfLogConfig(name='KalmanPositionEst', period_in_ms=100)
@@ -98,7 +98,7 @@ class CrazyflieLog(Node):
 
         self._motor_power_pub = self.create_publisher(
             MotorPower,
-            self._name + '/MotorPower',
+            self._name + '/logging/MotorPower',
             10
         )
         self._motor_power_config = cfLogConfig(name='MotorPower', period_in_ms=100)
@@ -111,7 +111,7 @@ class CrazyflieLog(Node):
 
         self._posCtl_pub = self.create_publisher(
             PosCtl,
-            self._name + '/posCtl',
+            self._name + '/logging/posCtl',
             10
         )
         self._posCtl_config = cfLogConfig(name='posCtl', period_in_ms=100)
@@ -126,7 +126,7 @@ class CrazyflieLog(Node):
 
         self._stabilizer_pub = self.create_publisher(
             Stabilizer,
-            self._name + '/Stabilizer',
+            self._name + '/logging/Stabilizer',
             10
         )
         self._stabilizer_config = cfLogConfig(name='Stabilizer', period_in_ms=100)
