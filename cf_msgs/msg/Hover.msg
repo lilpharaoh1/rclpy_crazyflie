@@ -1,6 +1,4 @@
 float32 vx
 float32 vy
-float32 vz
 float32 yaw_rate
----
-bool response
+float32 height

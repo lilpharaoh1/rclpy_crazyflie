@@ -27,6 +27,9 @@ set(msg_files
   "msg/Stabilizer.msg"
   "msg/Fly.msg"
   "msg/FlyStamped.msg"
+  "msg/Hover.msg"
+  "msg/HoverStamped.msg"
+  "msg/PositionStamped.msg"
 )
 
 set(action_files
@@ -40,6 +43,7 @@ set(srv_files
   "srv/SetParam.srv"
   "srv/TakeOff.srv"
   "srv/VelocityControl.srv"
+  "srv/PositionControl.srv"
   )
 
 # Generate messages & services

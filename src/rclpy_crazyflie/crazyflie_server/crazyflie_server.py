@@ -11,14 +11,14 @@ import time
 from std_msgs.msg import String, Bool
 
 class CrazyflieServer(Node):
-    CONNECTION_PUB_TIME = 1 # s
-    CONNECTION_EST_TIME = 8 # s TODO: Could measure this for optimization
+    CONNECTION_PUB_TIME = 0.05 # s
+    CONNECTION_EST_TIME = 30 # s
     RECONNECT = True
 
     def __init__(self):
         super().__init__('server_node')
         cflib.crtp.init_drivers(enable_debug_driver=False)
-        self.declare_parameter('uris', ['uri_empty'])
+        self.declare_parameter('uris', ['radio://0/80/2M/E7E7E7E7E7'])
         self.declare_parameter('log_rpy_rate', False)
         self.declare_parameter('log_rpyt', False)
         self.declare_parameter('log_kpe', False)
@@ -53,18 +53,13 @@ class CrazyflieServer(Node):
             log = CrazyflieLog(name, uri, c_rpy_rate=logs['c_rpy_rate'], c_rpyt=logs['c_rpyt'], \
                                kpe=logs['kpe'], pc=logs['pc'], mp=logs['mp'], sta=logs['sta'])
             self._crazyflie_logs[link_uri] = log
-            executor = rclpy.executors.SingleThreadedExecutor()
-            executor.add_node(self._crazyflie_logs[link_uri])
-            thread = threading.Thread(target=executor.spin, daemon=True)
-            thread.start()
+            self._node_spinner(self._crazyflie_logs[link_uri])
         if link_uri not in self._controllers:
             name, uri, _ = self._crazyflies[link_uri]
             controller = CrazyflieControl(name, uri)
             self._controllers[link_uri] = controller
-            executor = rclpy.executors.SingleThreadedExecutor()
-            executor.add_node(self._controllers[link_uri])
-            thread = threading.Thread(target=executor.spin, daemon=True)
-            thread.start()
+            self._node_spinner(self._controllers[link_uri])
+
         self._crazyflies[link_uri][2] = 1
 
     def _connection_failed(self, link_uri, msg):
@@ -76,24 +71,33 @@ class CrazyflieServer(Node):
             time.sleep(self.CONNECTION_EST_TIME)
             self.get_logger().info(f"Attempting to reconnect with {link_uri}...")
             self._crazyflies[link_uri][1].open_link(link_uri)
-            if self._crazyflies[link_uri][1] == 2:
-                return
 
     def _connection_lost(self, link_uri, msg):
         """Callback when disconnected after a connection has been made (i.e.
         Crazyflie moves out of range)"""
         pass
 
+
     def _disconnected(self, link_uri):
         """Callback when the Crazyflie is disconnected (called in all cases)"""
         self.get_logger().info('Disconnected from %s' % link_uri)
         self._crazyflies[link_uri][2] = 0
+        logs = self._crazyflie_logs.pop(link_uri, None)
+        control = self._controllers.pop(link_uri, None)
+        if logs is not None:
+            logs.destroy_node()
+        if control is not None:
+            control.destroy_node()
         if self.RECONNECT:
             time.sleep(self.CONNECTION_EST_TIME)
             self.get_logger().info(f"Attempting to reconnect with {link_uri}...")
             self._crazyflies[link_uri][1].open_link(link_uri)
-            if self._crazyflies[link_uri][1] == 2:
-                return
+
+    def _node_spinner(self, node):
+        executor = rclpy.executors.SingleThreadedExecutor()
+        executor.add_node(node)
+        thread = threading.Thread(target=executor.spin, daemon=True)
+        thread.start()
 
     def _unpack_log_params(self):
         c_rpy_rate = self.get_parameter('log_rpy_rate').get_parameter_value().bool_value
