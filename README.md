@@ -1,4 +1,10 @@
-# ROS Package containing our best Driver(s)
+# rclpy_crazyflie
+
+## High-Level
+
+This library is made so as to developers an easy "plug-and-play" way to interact with the Crazyflie API using ROS2. This repo should be especially useful to those who are new to ROS2. The intention of the library is to operate similarly to other pkgs such as [ros_can](""). Essentially a user can just subscribe to logging topics and publish simple drive commands to the robot, with the library handling all the interfacing with the Crazyflie API. 
+
+The Crazyflie server ( `rclpy_crazyflie/crazyflie_server` ) handles connection, logging and control of the drone swarm. The Crazyflie client ( `rclpy_crazyflie/crazyflie_client` ) handles requests from the user to the Crazyflie server. The Crazyflie RViz package ( `rclpy_cf_rviz` ) simply handles the conversion of internal Crazyflie messages ( `cf_msgs` ) to more RViz-compatible ROS2 messages. It also handles how these messages are displayed. 
 
 ## Setup
 
@@ -52,13 +58,7 @@ ros2 pkg executables
 ```
 If your packages built fine but don't appear here it likely means you either did not `source` your build or have not configured your `setup.py` file correctly.
 
-## High-Level
-
-This library is made so as to developers an easy "plug-and-play" way to interact with the Crazyflie API using ROS2. This repo should be especially useful to those who are new to ROS2. The intention of the library is to operate similarly to other pkgs such as [ros_can](""). Essentially a user can just subscribe to logging topics and publish simple drive commands to the robot, with the library handling all the interfacing with the Crazyflie API. 
-
-The Crazyflie server ( `rclpy_crazyflie/crazyflie_server` ) handles connection, logging and control of the drone swarm. The Crazyflie client ( `rclpy_crazyflie/crazyflie_client` ) handles requests from the user to the Crazyflie server. The Crazyflie RViz package ( `rclpy_cf_rviz` ) simply handles the conversion of internal Crazyflie messages ( `cf_msgs` ) to more RViz-compatible ROS2 messages. It also handles how these messages are displayed. 
-
-## How to use
+## How to Use
 
 Before launching the library, check the `.json` files found at `~/crazyflie_ws/src/rclpy_crazyflie/data`. In `uris.json`, ensure the URIs of all the drones in your system have been added to this file in the correct format. Use the CFClient to check the URIs of your Crazyflies before use. Similarly, check the `info.json` file to configure what information you want logged and displayed in RViz.
 
