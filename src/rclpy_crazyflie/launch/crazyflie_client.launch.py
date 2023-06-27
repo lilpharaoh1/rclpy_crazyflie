@@ -18,7 +18,7 @@ def generate_launch_description():
     client_nodes = [
         launch_ros.actions.Node(
             package='rclpy_crazyflie', executable='client',
-            name='client_node',
+            name=uri.split('/')[-1] + '_client_node',
             parameters=[
                 {
                 'uri': uri,

@@ -21,6 +21,7 @@ find_package(sensor_msgs REQUIRED)
 set(msg_files
   "msg/ControllerRPYRate.msg"
   "msg/ControllerRPYT.msg"
+  "msg/StateEstimate.msg"
   "msg/KalmanPositionEst.msg"
   "msg/MotorPower.msg"
   "msg/PosCtl.msg"

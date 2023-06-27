@@ -20,9 +20,16 @@ def launch_setup():
         )
     )
 
+    rviz_launch = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            [FindPackageShare("rclpy_cf_rviz"), "/launch", "/cf_rviz.launch.py"]
+        )
+    )
+
     nodes_to_start = [
         server_launch,
-        client_launch
+        client_launch,
+        rviz_launch
     ]
 
     return nodes_to_start

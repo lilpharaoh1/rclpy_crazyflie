@@ -1,0 +1,23 @@
+{
+    "rviz": 
+        {
+            "anything": true,
+            "logging": true
+        },
+    "logging" :
+        {
+            "log_rpy_rate": false,
+            "log_rpyt": false,
+            "log_se": true,
+            "log_kpe": true,
+            "log_pc": false,
+            "log_mp": false,
+            "log_sta": true
+        },
+    "control": 
+        { 
+            "pose": true,
+            "waypoints": true,
+            "velocities": false
+        }
+}

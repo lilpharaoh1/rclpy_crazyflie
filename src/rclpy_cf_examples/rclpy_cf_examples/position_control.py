@@ -7,7 +7,7 @@ import threading
 
 from std_msgs.msg import String, Float32
 from geometry_msgs.msg import PointStamped
-from cf_msgs.msg import HoverStamped, FlyStamped, PositionStamped, KalmanPositionEst
+from cf_msgs.msg import HoverStamped, FlyStamped, PositionStamped, StateEstimate
 
 waypoints = np.array([[0.0,  0.0,  1.0],
                       [0.7,  0.0,  1.0],
@@ -51,11 +51,7 @@ class PositionControl(Node):
 
         self.position_pub = self.create_publisher(PositionStamped, self._name + '/control/position', 10)
         self.land_pub = self.create_publisher(Float32, self._name + '/control/land', 10)
-        self.waypoint_pub = self.create_publisher(PointStamped, self._name + '/rviz/waypoint', 10)
-        self.pose_pub = self.create_publisher(PointStamped, self._name + '/rviz/pose', 10)
-        self.pose_sub = self.create_subscription(KalmanPositionEst, self._name + '/logging/KalmanPositionEst', self.pose_cb, 10)
-
-        self.rviz_timer = self.create_timer(0.05, self.rviz_cb)#, callback_group=self.cb_group)
+        self.pose_sub = self.create_subscription(StateEstimate, self._name + '/logging/StateEstimate', self.pose_cb, 10)
         
     def waypoint_select(self, at):
         if not at:
@@ -70,9 +66,9 @@ class PositionControl(Node):
         return False
 
     def pose_cb(self, data):
-        self.pose[0, 0] = data.state_x
-        self.pose[1, 0] = data.state_y
-        self.pose[2, 0] = data.state_z
+        self.pose[0, 0] = data.x
+        self.pose[1, 0] = data.y
+        self.pose[2, 0] = data.z
 
         self.waypoint_select(self.at(self.obj))
         self.get_logger().info('Next Waypoint : ' + str(self.obj))
@@ -89,24 +85,6 @@ class PositionControl(Node):
             msg.position.y = self.obj[1, 0]
             msg.position.z = self.obj[2, 0]
             self.position_pub.publish(msg)
-
-
-    def rviz_cb(self):
-        msg = PointStamped()
-        msg.header.stamp = self.get_clock().now().to_msg()
-        msg.header.frame_id = "map"
-        msg.point.x = self.obj[0, 0]
-        msg.point.y = self.obj[1, 0]
-        msg.point.z = self.obj[2, 0]
-        self.waypoint_pub.publish(msg)
-
-        msg = PointStamped()
-        msg.header.stamp = self.get_clock().now().to_msg()
-        msg.header.frame_id = "map"
-        msg.point.x = self.pose[0, 0]
-        msg.point.y = self.pose[1, 0]
-        msg.point.z = self.pose[2, 0]
-        self.pose_pub.publish(msg)
 
     def land(self):
         land_msg = Float32(data=0.0)

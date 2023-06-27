@@ -21,6 +21,7 @@ class CrazyflieServer(Node):
         self.declare_parameter('uris', ['radio://0/80/2M/E7E7E7E7E7'])
         self.declare_parameter('log_rpy_rate', False)
         self.declare_parameter('log_rpyt', False)
+        self.declare_parameter('log_se', False)
         self.declare_parameter('log_kpe', False)
         self.declare_parameter('log_pc', False)
         self.declare_parameter('log_mp', False)
@@ -50,7 +51,7 @@ class CrazyflieServer(Node):
         if link_uri not in self._crazyflie_logs:
             logs = self._unpack_log_params()
             name, uri, _ = self._crazyflies[link_uri]
-            log = CrazyflieLog(name, uri, c_rpy_rate=logs['c_rpy_rate'], c_rpyt=logs['c_rpyt'], \
+            log = CrazyflieLog(name, uri, c_rpy_rate=logs['c_rpy_rate'], c_rpyt=logs['c_rpyt'], se=logs['se'], \
                                kpe=logs['kpe'], pc=logs['pc'], mp=logs['mp'], sta=logs['sta'])
             self._crazyflie_logs[link_uri] = log
             self._node_spinner(self._crazyflie_logs[link_uri])
@@ -102,14 +103,18 @@ class CrazyflieServer(Node):
     def _unpack_log_params(self):
         c_rpy_rate = self.get_parameter('log_rpy_rate').get_parameter_value().bool_value
         c_rpyt = self.get_parameter('log_rpyt').get_parameter_value().bool_value
+        se = self.get_parameter('log_se').get_parameter_value().bool_value
         kpe = self.get_parameter('log_kpe').get_parameter_value().bool_value
         pc = self.get_parameter('log_pc').get_parameter_value().bool_value
         mp = self.get_parameter('log_mp').get_parameter_value().bool_value
         sta = self.get_parameter('log_sta').get_parameter_value().bool_value
         
+        self.get_logger().info('state estimate : ' + str(se))
+
         logs = {
             'c_rpy_rate': c_rpy_rate,
             'c_rpyt': c_rpyt,
+            'se': se,
             'kpe': kpe,
             'pc': pc,
             'mp': mp,

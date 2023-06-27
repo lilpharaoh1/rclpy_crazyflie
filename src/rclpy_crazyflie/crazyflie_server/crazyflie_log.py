@@ -34,7 +34,7 @@ from cflib.crazyflie.log import LogConfig as cfLogConfig
 
 import rclpy
 from rclpy.node import Node
-from cf_msgs.msg import ControllerRPYRate, ControllerRPYT, KalmanPositionEst, MotorPower, PosCtl, Stabilizer
+from cf_msgs.msg import ControllerRPYRate, ControllerRPYT, StateEstimate, KalmanPositionEst, MotorPower, PosCtl, Stabilizer
 import json
 
 class CrazyflieLog(Node):
@@ -44,13 +44,14 @@ class CrazyflieLog(Node):
     """
 
     def __init__(self, name : str, crazyflie : Crazyflie, c_rpy_rate=False, c_rpyt=False, \
-                kpe=False, mp=False, pc=False, sta=False, period_ms=100):
+                se=False, kpe=False, mp=False, pc=False, sta=False, period_ms=100):
         super().__init__(name + '_log')
         self._name = name
         self._cf = crazyflie
         self._logs = {
             'c_rpy_rate' : c_rpy_rate,
             'c_rpyt' : c_rpyt,
+            'se': se,
             'kpe' : kpe,
             'mp' : mp,
             'pc' : pc,
@@ -83,6 +84,31 @@ class CrazyflieLog(Node):
         self._controller_rpyt_config.add_variable('controller.pitch', 'float')
         self._controller_rpyt_config.add_variable('controller.yaw', 'float')
         self._cf.log.add_config(self._controller_rpyt_config)
+
+        self._state_estimate_pub = self.create_publisher(
+            StateEstimate,
+            self._name + '/logging/StateEstimate',
+            10
+        )
+        self._state_estimate_config = cfLogConfig(name='StateEstimate', period_in_ms=100)
+        self._state_estimate_config.data_received_cb.add_callback(self._state_estimate_cb)
+        self._state_estimate_config.add_variable('stateEstimate.x', 'float')
+        self._state_estimate_config.add_variable('stateEstimate.y', 'float')
+        self._state_estimate_config.add_variable('stateEstimate.z', 'float')
+        # self._state_estimate_config.add_variable('stateEstimate.vx', 'float')
+        # self._state_estimate_config.add_variable('stateEstimate.vy', 'float')
+        # self._state_estimate_config.add_variable('stateEstimate.vz', 'float')
+        # self._state_estimate_config.add_variable('stateEstimate.ax', 'float')
+        # self._state_estimate_config.add_variable('stateEstimate.ay', 'float')
+        # self._state_estimate_config.add_variable('stateEstimate.az', 'float')
+        # self._state_estimate_config.add_variable('stateEstimate.yaw', 'float')
+        # self._state_estimate_config.add_variable('stateEstimate.pitch', 'float')
+        # self._state_estimate_config.add_variable('stateEstimate.roll', 'float')
+        # self._state_estimate_config.add_variable('stateEstimate.qx', 'float')
+        # self._state_estimate_config.add_variable('stateEstimate.qy', 'float')
+        # self._state_estimate_config.add_variable('stateEstimate.qz', 'float')
+        # self._state_estimate_config.add_variable('stateEstimate.qw', 'float')
+        self._cf.log.add_config(self._state_estimate_config)
 
         self._kalman_position_pub = self.create_publisher(
             KalmanPositionEst,
@@ -144,6 +170,8 @@ class CrazyflieLog(Node):
             self.log_controller_rpy_rate(period_in_ms=period_ms)
         if self._logs['c_rpyt'] :
             self.log_controller_rpyt(period_in_ms=period_ms)
+        if self._logs['se']:
+            self.log_state_estimate(period_in_ms=period_ms)
         if self._logs['kpe']:
             self.log_kalman_position_est(period_in_ms=period_ms)
         if self._logs['pc']:
@@ -189,6 +217,11 @@ class CrazyflieLog(Node):
         self._controller_rpyt_config.period_in_ms = period_in_ms
         self._controller_rpyt_config.start()
 
+    def log_state_estimate(self, period_in_ms=100):
+        """ Starts StateEstimate log config """
+        self._state_estimate_config.period_in_ms = period_in_ms
+        self._state_estimate_config.start()
+
     def log_kalman_position_est(self, period_in_ms=100):
         """ Starts KalmanPositionEst log config """
         self._kalman_position_config.period_in_ms = period_in_ms
@@ -216,6 +249,10 @@ class CrazyflieLog(Node):
     def stop_log_controller_rpyt(self):
         """ Stops ControllerRPYT log config """
         self._controller_rpyt_config.stop()
+
+    def stop_log_state_estimate(self):
+        """ Stops StateEstimate log config """
+        self._state_estimate_config.stop()
 
     def stop_log_kalman_position_est(self):
         """ Stops KalmanPositionEst log config """
@@ -253,6 +290,29 @@ class CrazyflieLog(Node):
         msg.yaw = data['controller.yaw']
         msg.actuator_thrust = data['controller.actuatorThrust']
         self._controller_rpyt_pub.publish(msg)
+
+    def _state_estimate_cb(self, timestamp, data, logconfig):
+        """ Callback from CrazyflieLibPython, publishes StateEstimate messages """
+        msg = StateEstimate()
+        msg.stamp.stamp = self.get_clock().now().to_msg()
+        msg.cfstamp = timestamp
+        msg.x = data['stateEstimate.x']
+        msg.y = data['stateEstimate.y']
+        msg.z = data['stateEstimate.z']
+        # msg.vx = data['stateEstimate.vx']
+        # msg.vy = data['stateEstimate.vy']
+        # msg.vz = data['stateEstimate.vz']
+        # msg.ax = data['stateEstimate.ax']
+        # msg.ay = data['stateEstimate.ay']
+        # msg.az = data['stateEstimate.az']
+        # msg.yaw = data['stateEstimate.yaw']
+        # msg.pitch = data['stateEstimate.pitch']
+        # msg.roll = data['stateEstimate.roll']
+        # msg.qx = data['stateEstimate.qx']
+        # msg.qy = data['stateEstimate.qy']
+        # msg.qz = data['stateEstimate.qz']
+        # msg.qw = data['stateEstimate.qw']
+        self._state_estimate_pub.publish(msg)
 
     def _kalman_position_cb(self, timestamp, data, logconfig):
         """ Callback from CrazyflieLibPython, publishes KalmanPositionEst messages """

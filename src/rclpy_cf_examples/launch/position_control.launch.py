@@ -20,7 +20,7 @@ def generate_launch_description():
     client_nodes = [
         launch_ros.actions.Node(
             package='rclpy_cf_examples', executable='position_control',
-            name='pc_cf_node',
+            name=uri.split('/')[-1] + '_pc_cf_node',
             parameters=[
                 {
                 'name': uri.split('/')[-1],
