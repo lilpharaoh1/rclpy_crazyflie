@@ -45,6 +45,7 @@ set(srv_files
   "srv/TakeOff.srv"
   "srv/VelocityControl.srv"
   "srv/PositionControl.srv"
+  "srv/PoseTransform.srv"
   )
 
 # Generate messages & services

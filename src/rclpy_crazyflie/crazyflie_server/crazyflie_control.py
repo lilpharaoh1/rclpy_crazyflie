@@ -13,13 +13,14 @@ from rclpy.node import Node
 from std_msgs.msg import UInt16
 from geometry_msgs.msg import Vector3
 
-from cf_msgs.srv import SendHoverSetpoint, ResetPositionEstimator, SetParam, VelocityControl, PositionControl, TakeOff, Land
+from cf_msgs.srv import SendHoverSetpoint, ResetPositionEstimator, SetParam, VelocityControl, PositionControl, TakeOff, Land, PoseTransform
 from motion_commander.velocity_primitives import *
 # from motion_commander.position_primatives import *
 
 class CrazyflieControl(Node):
     DEFAULT_HEIGHT = 0.3
     DEFAULT_VELOCITY = 0.5
+    SERVICE_MESSAGES = False
     
     def __init__(self, name: str, crazyflie : Crazyflie):
         super().__init__(name + '_control')
@@ -71,6 +72,13 @@ class CrazyflieControl(Node):
             self._name + '/land',
             self._land_cb
         )
+
+        self._se_tf_client = self.create_client(PoseTransform, self._name + '/se_transform')
+
+        while not self._se_tf_client.wait_for_service(timeout_sec=1.0):
+            if self.SERVICE_MESSAGES:
+                self.get_logger().info('reset_position_estimator service not available, waiting again...')
+        self._se_tf_req = PoseTransform.Request()
         
     def _reset_position_estimator_cb(self, req, response):
         response.response = True
@@ -81,7 +89,8 @@ class CrazyflieControl(Node):
             self._takeoff()
         vx = req.vx
         vy = req.vy
-        z = req.z
+        z_req = self._se_tf_handler(z=req.z)
+        z = z_req.z
         yaw_rate = req.yaw_rate
         self._cf.commander.send_hover_setpoint(vx, vy, yaw_rate, z)
         response.response = True
@@ -106,7 +115,10 @@ class CrazyflieControl(Node):
     
     def _position_control_cb(self, req, response):
         try:
-            self._pc.go_to(req.x, req.y, req.z, velocity=self.DEFAULT_VELOCITY)
+            req = self._se_tf_handler(x=float(req.x), y=float(req.y), z=float(req.z))
+            if req is not None:
+                self.get_logger().info(str(req))
+                self._pc.go_to(req.x, req.y, req.z, velocity=self.DEFAULT_VELOCITY) # TODO: FIX THIS!!!
         except Exception as e:
             self.get_logger().info('error occured in position control')
             print(str(e))
@@ -116,7 +128,8 @@ class CrazyflieControl(Node):
         return response
     
     def _take_off_cb(self, req, response):
-        height = req.height
+        req = self._se_tf_handler(z=float(req.height))
+        height = req.z
         self._takeoff(height=height)
         response.response = True
         return response
@@ -141,6 +154,17 @@ class CrazyflieControl(Node):
         except BaseException as e:
             print(e)
             return
+        
+    def _se_tf_handler(self, x=0.0, y=0.0, z=0.0, yaw=0.0):
+        self._se_tf_req.x = float(x)
+        self._se_tf_req.y = float(y)
+        self._se_tf_req.z = float(z) 
+        self._se_tf_req.yaw = float(yaw)
+        self.future = self._se_tf_client.call_async(self._se_tf_req)
+        self.get_logger().info('futrure done now...')
+        rclpy.spin_until_future_complete(self, self.future)
+        self.get_logger().info('futrure done now...')
+        return self.future.result()
     
 def main(args=None):
     rclpy.init(args=args)

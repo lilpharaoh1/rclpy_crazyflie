@@ -7,7 +7,7 @@ package_name = 'rclpy_crazyflie'
 setup(
     name=package_name,
     version='0.0.0',
-    packages=[package_name, 'crazyflie_server', 'crazyflie_client', 'motion_commander'],
+    packages=[package_name, 'crazyflie_server', 'crazyflie_client', 'motion_commander', 'crazyflie_tf'],
     data_files=[
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
@@ -27,7 +27,8 @@ setup(
             'server = crazyflie_server.crazyflie_server:main',
             'control = crazyflie_server.crazyflie_control:main',
             'log = crazyflie_server.crazyflie_log:main',
-            'client = crazyflie_client.crazyflie_client:main'
+            'client = crazyflie_client.crazyflie_client:main',
+            'pose_tf = crazyflie_tf.pose_transformer:main'
         ],
     },
 )
