@@ -2,6 +2,7 @@
 import numpy as np
 import pickle
 import time
+import threading
 
 from cflib.crazyflie import Crazyflie
 from cflib.positioning.motion_commander import MotionCommander
@@ -15,6 +16,7 @@ from geometry_msgs.msg import Vector3
 
 from cf_msgs.srv import SendHoverSetpoint, ResetPositionEstimator, SetParam, VelocityControl, PositionControl, TakeOff, Land, PoseTransform
 from motion_commander.velocity_primitives import *
+from crazyflie_tf.pose_tf_handler import tf_handler
 # from motion_commander.position_primatives import *
 
 class CrazyflieControl(Node):
@@ -72,13 +74,6 @@ class CrazyflieControl(Node):
             self._name + '/land',
             self._land_cb
         )
-
-        self._se_tf_client = self.create_client(PoseTransform, self._name + '/se_transform')
-
-        while not self._se_tf_client.wait_for_service(timeout_sec=1.0):
-            if self.SERVICE_MESSAGES:
-                self.get_logger().info('reset_position_estimator service not available, waiting again...')
-        self._se_tf_req = PoseTransform.Request()
         
     def _reset_position_estimator_cb(self, req, response):
         response.response = True
@@ -121,7 +116,7 @@ class CrazyflieControl(Node):
                 self._pc.go_to(req.x, req.y, req.z, velocity=self.DEFAULT_VELOCITY) # TODO: FIX THIS!!!
         except Exception as e:
             self.get_logger().info('error occured in position control')
-            print(str(e))
+            self.get_logger().info(str(e))
             response.response = False
             return False
         response.response = True
@@ -156,15 +151,13 @@ class CrazyflieControl(Node):
             return
         
     def _se_tf_handler(self, x=0.0, y=0.0, z=0.0, yaw=0.0):
-        self._se_tf_req.x = float(x)
-        self._se_tf_req.y = float(y)
-        self._se_tf_req.z = float(z) 
-        self._se_tf_req.yaw = float(yaw)
-        self.future = self._se_tf_client.call_async(self._se_tf_req)
-        self.get_logger().info('futrure done now...')
-        rclpy.spin_until_future_complete(self, self.future)
-        self.get_logger().info('futrure done now...')
-        return self.future.result()
+        response = []
+        thread = threading.Thread(target=tf_handler, args=(self._name, (x, y, z, yaw), response))
+        thread.start()
+
+        time.sleep(1)
+
+        return response[0].result()
     
 def main(args=None):
     rclpy.init(args=args)
