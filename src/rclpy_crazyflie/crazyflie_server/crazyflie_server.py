@@ -109,8 +109,6 @@ class CrazyflieServer(Node):
         mp = self.get_parameter('log_mp').get_parameter_value().bool_value
         sta = self.get_parameter('log_sta').get_parameter_value().bool_value
         
-        self.get_logger().info('state estimate : ' + str(se))
-
         logs = {
             'c_rpy_rate': c_rpy_rate,
             'c_rpyt': c_rpyt,

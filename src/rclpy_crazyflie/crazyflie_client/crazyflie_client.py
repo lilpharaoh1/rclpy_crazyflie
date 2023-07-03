@@ -5,6 +5,7 @@ import rclpy
 from rclpy.node import Node
 from std_msgs.msg import Float32, Bool
 from cf_msgs.msg import FlyStamped, HoverStamped, PositionStamped
+from geometry_msgs.msg import PointStamped
 from cf_msgs.srv import SendHoverSetpoint, ResetPositionEstimator, SetParam, VelocityControl, PositionControl, TakeOff, Land
 from motion_commander.velocity_primitives import *
 from .connection_callback_group import ConnectionCallbackGroup
@@ -31,7 +32,7 @@ class CrazyflieClient(Node):
         self.connection_callback_group = ConnectionCallbackGroup(self._name)
         self.connection_sub = self.create_subscription(Bool, self._name + '/connection', self.connection_callback_group, 10)
         self.velocity_control_sub = self.create_subscription(FlyStamped, self._name + '/control/velocity', self.velocity_cb, 10, callback_group=self.connection_callback_group)
-        self.position_control_sub = self.create_subscription(PositionStamped, self._name + '/control/position', self.position_cb, 10, callback_group=self.connection_callback_group)
+        self.position_control_sub = self.create_subscription(PointStamped, self._name + '/control/position', self.position_cb, 10, callback_group=self.connection_callback_group)
         self.hover_sub = self.create_subscription(HoverStamped, self._name + '/control/hover', self.hover_cb, 10, callback_group=self.connection_callback_group)
         self.take_off_sub = self.create_subscription(Float32, self._name + '/control/take_off', self.take_off_cb, 10, callback_group=self.connection_callback_group)
         self.land_sub = self.create_subscription(Float32, self._name + '/control/land', self.land_cb, 10, callback_group=self.connection_callback_group)
@@ -79,9 +80,9 @@ class CrazyflieClient(Node):
         _ = self.velocity_control_handler(vx, vy, vz, yaw_rate)
 
     def position_cb(self, data):
-        x = data.position.x
-        y = data.position.y
-        z = data.position.z
+        x = data.point.x
+        y = data.point.y
+        z = data.point.z
         _ = self.position_control_handler(x, y, z)
 
     def hover_cb(self, data):

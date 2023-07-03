@@ -49,7 +49,7 @@ class PositionControl(Node):
 
         self.cb_group = PositionControlCallBackGroup()
 
-        self.position_pub = self.create_publisher(PositionStamped, self._name + '/control/position', 10)
+        self.position_pub = self.create_publisher(PointStamped, self._name + '/control/position', 10)
         self.land_pub = self.create_publisher(Float32, self._name + '/control/land', 10)
         self.pose_sub = self.create_subscription(StateEstimate, self._name + '/logging/StateEstimate', self.pose_cb, 10)
         
@@ -79,11 +79,12 @@ class PositionControl(Node):
             while(True):
                 time.sleep(1)
         else:
-            msg = PositionStamped()
-            msg.stamp.stamp = self.get_clock().now().to_msg()
-            msg.position.x = self.obj[0, 0]
-            msg.position.y = self.obj[1, 0]
-            msg.position.z = self.obj[2, 0]
+            msg = PointStamped()
+            msg.header.stamp = self.get_clock().now().to_msg()
+            msg.header.frame_id = 'world'
+            msg.point.x = self.obj[0, 0]
+            msg.point.y = self.obj[1, 0]
+            msg.point.z = self.obj[2, 0]
             self.position_pub.publish(msg)
 
     def land(self):

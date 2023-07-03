@@ -19,5 +19,9 @@
             "pose": true,
             "waypoints": true,
             "velocities": false
+        },
+    "coordinates":
+        {
+            "global": true
         }
 }

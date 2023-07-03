@@ -35,7 +35,17 @@ from cflib.crazyflie.log import LogConfig as cfLogConfig
 import rclpy
 from rclpy.node import Node
 from cf_msgs.msg import ControllerRPYRate, ControllerRPYT, StateEstimate, KalmanPositionEst, MotorPower, PosCtl, Stabilizer
+from geometry_msgs.msg import PoseStamped, PointStamped
 import json
+import numpy as np
+
+def euler_to_quaternion(yaw, pitch, roll):
+    yaw, pitch, roll = np.deg2rad(yaw), np.deg2rad(pitch), np.deg2rad(roll)
+    qx = np.sin(roll/2) * np.cos(pitch/2) * np.cos(yaw/2) - np.cos(roll/2) * np.sin(pitch/2) * np.sin(yaw/2)
+    qy = np.cos(roll/2) * np.sin(pitch/2) * np.cos(yaw/2) + np.sin(roll/2) * np.cos(pitch/2) * np.sin(yaw/2)
+    qz = np.cos(roll/2) * np.cos(pitch/2) * np.sin(yaw/2) - np.sin(roll/2) * np.sin(pitch/2) * np.cos(yaw/2)
+    qw = np.cos(roll/2) * np.cos(pitch/2) * np.cos(yaw/2) + np.sin(roll/2) * np.sin(pitch/2) * np.sin(yaw/2)
+    return qx, qy, qz, qw
 
 class CrazyflieLog(Node):
     """
@@ -57,6 +67,7 @@ class CrazyflieLog(Node):
             'pc' : pc,
             'sta' : sta
         }
+        self.pose = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
 
         # Set up log configs for standard log groups
         self._controller_rpy_rate_pub = self.create_publisher(
@@ -90,6 +101,11 @@ class CrazyflieLog(Node):
             self._name + '/logging/StateEstimate',
             10
         )
+        self._pose_pub = self.create_publisher(
+            PoseStamped,
+            self._name + '/pose',
+            10
+        )
         self._state_estimate_config = cfLogConfig(name='StateEstimate', period_in_ms=100)
         self._state_estimate_config.data_received_cb.add_callback(self._state_estimate_cb)
         self._state_estimate_config.add_variable('stateEstimate.x', 'float')
@@ -113,6 +129,11 @@ class CrazyflieLog(Node):
         self._kalman_position_pub = self.create_publisher(
             KalmanPositionEst,
             self._name + '/logging/KalmanPositionEst',
+            10
+        )
+        self._kalman_pose_pub = self.create_publisher(
+            PoseStamped,
+            self._name + '/kalman_pose',
             10
         )
         self._kalman_position_config = cfLogConfig(name='KalmanPositionEst', period_in_ms=100)
@@ -293,6 +314,10 @@ class CrazyflieLog(Node):
 
     def _state_estimate_cb(self, timestamp, data, logconfig):
         """ Callback from CrazyflieLibPython, publishes StateEstimate messages """
+        self.pose[0] = data['stateEstimate.x']
+        self.pose[1] = data['stateEstimate.y']
+        self.pose[2] = data['stateEstimate.z']
+        
         msg = StateEstimate()
         msg.stamp.stamp = self.get_clock().now().to_msg()
         msg.cfstamp = timestamp
@@ -314,6 +339,21 @@ class CrazyflieLog(Node):
         # msg.qw = data['stateEstimate.qw']
         self._state_estimate_pub.publish(msg)
 
+        msg = PoseStamped()
+        msg.header.stamp = self.get_clock().now().to_msg()
+        msg.header.frame_id =  '/local/' + self._name
+        msg.pose.position.x = data['stateEstimate.x']
+        msg.pose.position.y = data['stateEstimate.y']
+        msg.pose.position.z = data['stateEstimate.z']
+        qx, qy, qz, qw = euler_to_quaternion(*self.pose[3:])
+        msg.pose.orientation.x = qx
+        msg.pose.orientation.y = qy
+        msg.pose.orientation.z = qz
+        msg.pose.orientation.w = qw
+        self._pose_pub.publish(msg)
+
+
+
     def _kalman_position_cb(self, timestamp, data, logconfig):
         """ Callback from CrazyflieLibPython, publishes KalmanPositionEst messages """
         msg = KalmanPositionEst()
@@ -323,6 +363,19 @@ class CrazyflieLog(Node):
         msg.state_y = data['kalman.stateY']
         msg.state_z = data['kalman.stateZ']
         self._kalman_position_pub.publish(msg)
+
+        msg = PoseStamped()
+        msg.header.stamp = self.get_clock().now().to_msg()
+        # msg.header.frame_id = '/kalman/' + self._name
+        msg.pose.position.x = data['kalman.stateX']
+        msg.pose.position.y = data['kalman.stateY']
+        msg.pose.position.z = data['kalman.stateZ']
+        qx, qy, qz, qw = euler_to_quaternion(*self.pose[3:])
+        msg.pose.orientation.x = qx
+        msg.pose.orientation.y = qy
+        msg.pose.orientation.z = qz
+        msg.pose.orientation.w = qw
+        self._pose_pub.publish(msg)
 
     def _motor_power_cb(self, timestamp, data, logconfig):
         """ Callback from CrazyflieLibPython, publishes MotorPower messages """
@@ -350,6 +403,9 @@ class CrazyflieLog(Node):
 
     def _stabilizer_cb(self, timestamp, data, logconfig):
         """ Callback from CrazyflieLibPython, publishes Stabilizer messages """
+        self.pose[3] = data['stabilizer.yaw']
+        self.pose[4] = data['stabilizer.pitch']
+        self.pose[5] = data['stabilizer.roll']
         msg = Stabilizer()
         msg.stamp.stamp = self.get_clock().now().to_msg()
         msg.cfstamp = timestamp

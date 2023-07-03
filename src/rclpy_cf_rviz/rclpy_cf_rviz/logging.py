@@ -63,7 +63,7 @@ class RvizLogger(Node):
                 self.get_logger().info("Cannot display pose or velocities, please enable log_kpe...")
         
         if self.get_parameter('waypoints').get_parameter_value().bool_value:
-            self.waypoints_sub = self.create_subscription(PositionStamped, self._name + '/control/position', self.waypoints_cb, 10)
+            self.waypoints_sub = self.create_subscription(PointStamped, self._name + '/control/position', self.waypoints_cb, 10)
             self.waypoints_pub = self.create_publisher(PointStamped, self._name + '/rviz/waypoints', 10)
 
     def sta_cb(self, data):
