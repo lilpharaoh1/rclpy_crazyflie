@@ -28,7 +28,8 @@ setup(
             'control = crazyflie_server.crazyflie_control:main',
             'log = crazyflie_server.crazyflie_log:main',
             'client = crazyflie_client.crazyflie_client:main',
-            'pose_transform = crazyflie_tf2.pose_transform:main'
+            'pose_transform = crazyflie_tf2.pose_transform:main',
+            'waypoint_transform = crazyflie_tf2.waypoint_transform:main'
         ],
     },
 )

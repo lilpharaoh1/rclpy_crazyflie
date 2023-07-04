@@ -1,7 +1,7 @@
 import math
 import sys
 
-from geometry_msgs.msg import TransformStamped
+from geometry_msgs.msg import TransformStamped, PoseStamped
 
 import numpy as np
 
@@ -18,6 +18,30 @@ def euler_to_quaternion(r):
     qw = np.cos(roll/2) * np.cos(pitch/2) * np.cos(yaw/2) + np.sin(roll/2) * np.sin(pitch/2) * np.sin(yaw/2)
     return [qx, qy, qz, qw]
 
+def euler_from_quaternion(q):
+        """
+        Convert a quaternion into euler angles (roll, pitch, yaw)
+        roll is rotation around x in radians (counterclockwise)
+        pitch is rotation around y in radians (counterclockwise)
+        yaw is rotation around z in radians (counterclockwise)
+        """
+        x, y, z, w = q.x, q.y, q.z, q.w
+        
+        t0 = +2.0 * (w * x + y * z)
+        t1 = +1.0 - 2.0 * (x * x + y * y)
+        roll_x = math.atan2(t0, t1)
+     
+        t2 = +2.0 * (w * y - z * x)
+        t2 = +1.0 if t2 > +1.0 else t2
+        t2 = -1.0 if t2 < -1.0 else t2
+        pitch_y = math.asin(t2)
+     
+        t3 = +2.0 * (w * z + x * y)
+        t4 = +1.0 - 2.0 * (y * y + z * z)
+        yaw_z = math.atan2(t3, t4)
+     
+        return roll_x, pitch_y, yaw_z # in radians
+
 
 class PoseTransform(Node):
     """
@@ -30,29 +54,31 @@ class PoseTransform(Node):
 
     def __init__(self, name, initial_pose):
         super().__init__('pose_tf_node_' + name)
-        self.tf_static_broadcaster = StaticTransformBroadcaster(self)
+        self._name = name
+        self._initial_pose = initial_pose
 
-        # Publish static transforms once at startup
-        self.make_transforms(name, initial_pose)
+        self.local_pose_sub = self.create_subscription(PoseStamped, name + '/pose/local', self.local_pose_cb, 10)
+        self.global_pose_pub = self.create_publisher(PoseStamped, name + '/pose/global', 1)
 
-    def make_transforms(self, name, initial_pose):
-        t = TransformStamped()
+    def local_pose_cb(self, data):
+        msg = PoseStamped()
+        msg.header.stamp = data.header.stamp
+        msg.header.frame_id = 'world'
 
-        t.header.stamp = self.get_clock().now().to_msg()
-        t.header.frame_id = '/local/' + name
-        t.child_frame_id = '/world/' + name
+        msg.pose.position.x = data.pose.position.x - float(self._initial_pose[0])
+        msg.pose.position.y = data.pose.position.y - float(self._initial_pose[1])
+        msg.pose.position.z = data.pose.position.z - float(self._initial_pose[2])
 
-        t.transform.translation.x = -float(initial_pose[0])
-        t.transform.translation.y = -float(initial_pose[1])
-        t.transform.translation.z = -float(initial_pose[2])
-        qx, qy, qz, qw = euler_to_quaternion(
-            (float(initial_pose[3]), float(0.0), float(0.0)))
-        t.transform.rotation.x = qx
-        t.transform.rotation.y = qy
-        t.transform.rotation.z = qz
-        t.transform.rotation.w = qw
+        yaw, pitch, roll = euler_from_quaternion(data.pose.orientation)
+        yaw += float(self._initial_pose[3])
+        q = euler_to_quaternion([yaw, pitch, roll])
 
-        self.tf_static_broadcaster.sendTransform(t)
+        msg.pose.orientation.x = q[0]
+        msg.pose.orientation.y = q[1]
+        msg.pose.orientation.z = q[2]
+        msg.pose.orientation.w = q[3]
+
+        self.global_pose_pub.publish(msg)
 
 
 def main():

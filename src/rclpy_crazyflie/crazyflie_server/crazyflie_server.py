@@ -19,6 +19,7 @@ class CrazyflieServer(Node):
         super().__init__('server_node')
         cflib.crtp.init_drivers(enable_debug_driver=False)
         self.declare_parameter('uris', ['radio://0/80/2M/E7E7E7E7E7'])
+        self.declare_parameter('lighthouse', False)
         self.declare_parameter('log_rpy_rate', False)
         self.declare_parameter('log_rpyt', False)
         self.declare_parameter('log_se', False)
@@ -28,6 +29,7 @@ class CrazyflieServer(Node):
         self.declare_parameter('log_sta', False)
 
         self._uris = self.get_parameter('uris').get_parameter_value().string_array_value
+        self._lighthouse = self.get_parameter('lighthouse').get_parameter_value().bool_value
         self._connection_pubs = {}
         self._crazyflies = {}
         self._crazyflie_logs = {}
@@ -52,7 +54,7 @@ class CrazyflieServer(Node):
             logs = self._unpack_log_params()
             name, uri, _ = self._crazyflies[link_uri]
             log = CrazyflieLog(name, uri, c_rpy_rate=logs['c_rpy_rate'], c_rpyt=logs['c_rpyt'], se=logs['se'], \
-                               kpe=logs['kpe'], pc=logs['pc'], mp=logs['mp'], sta=logs['sta'])
+                               kpe=logs['kpe'], pc=logs['pc'], mp=logs['mp'], sta=logs['sta'], lighthouse=self._lighthouse)
             self._crazyflie_logs[link_uri] = log
             self._node_spinner(self._crazyflie_logs[link_uri])
         if link_uri not in self._controllers:

@@ -54,10 +54,11 @@ class CrazyflieLog(Node):
     """
 
     def __init__(self, name : str, crazyflie : Crazyflie, c_rpy_rate=False, c_rpyt=False, \
-                se=False, kpe=False, mp=False, pc=False, sta=False, period_ms=100):
+                se=False, kpe=False, mp=False, pc=False, sta=False, lighthouse=False, period_ms=100):
         super().__init__(name + '_log')
         self._name = name
         self._cf = crazyflie
+        self._lighthouse = lighthouse
         self._logs = {
             'c_rpy_rate' : c_rpy_rate,
             'c_rpyt' : c_rpyt,
@@ -103,7 +104,7 @@ class CrazyflieLog(Node):
         )
         self._pose_pub = self.create_publisher(
             PoseStamped,
-            self._name + '/pose',
+            self._name + '/pose/local' if not lighthouse else self._name + '/pose/global',
             10
         )
         self._state_estimate_config = cfLogConfig(name='StateEstimate', period_in_ms=100)
@@ -133,7 +134,7 @@ class CrazyflieLog(Node):
         )
         self._kalman_pose_pub = self.create_publisher(
             PoseStamped,
-            self._name + '/kalman_pose',
+            self._name + '/pose/kalman',
             10
         )
         self._kalman_position_config = cfLogConfig(name='KalmanPositionEst', period_in_ms=100)
@@ -341,7 +342,7 @@ class CrazyflieLog(Node):
 
         msg = PoseStamped()
         msg.header.stamp = self.get_clock().now().to_msg()
-        msg.header.frame_id =  '/local/' + self._name
+        msg.header.frame_id =  '/local/' + self._name if not self._lighthouse else 'world'
         msg.pose.position.x = data['stateEstimate.x']
         msg.pose.position.y = data['stateEstimate.y']
         msg.pose.position.z = data['stateEstimate.z']
@@ -375,7 +376,7 @@ class CrazyflieLog(Node):
         msg.pose.orientation.y = qy
         msg.pose.orientation.z = qz
         msg.pose.orientation.w = qw
-        self._pose_pub.publish(msg)
+        self._kalman_pose_pub.publish(msg)
 
     def _motor_power_cb(self, timestamp, data, logconfig):
         """ Callback from CrazyflieLibPython, publishes MotorPower messages """

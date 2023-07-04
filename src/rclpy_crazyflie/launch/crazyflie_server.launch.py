@@ -14,6 +14,7 @@ with open('install/rclpy_crazyflie/share/rclpy_crazyflie/data/info.json') as f:
     data = json.load(f)
     log = data["logging"]
     global_coords = data["coordinates"]["global"]
+    lighthouse = data["coordinates"]["lighthouse"]
 
 def launch_server():
     nodes_to_launch = []
@@ -24,6 +25,7 @@ def launch_server():
             parameters=[
                 {
                 'uris': uris,
+                'lighthouse': lighthouse,
                 'log_rpy_rate': log['log_rpy_rate'],
                 'log_rpyt': log['log_rpyt'],
                 'log_se': log['log_se'],
@@ -35,7 +37,7 @@ def launch_server():
             ])
         )
     
-    if global_coords:
+    if global_coords and not lighthouse:
         for (uri, pose) in zip(uris, poses):
             pose_tf_node = \
                 launch_ros.actions.Node(
@@ -43,8 +45,16 @@ def launch_server():
                 name='pose_tf_' + uri.split('/')[-1],
                 arguments=[uri.split('/')[-1], str(pose[0]), str(pose[1]), str(pose[2]), str(pose[3])]
                 )
-
+            
+            waypoint_tf_node = \
+                launch_ros.actions.Node(
+                package='rclpy_crazyflie', executable='waypoint_transform',
+                name='waypoint_tf_' + uri.split('/')[-1],
+                arguments=[uri.split('/')[-1], str(pose[0]), str(pose[1]), str(pose[2]), str(pose[3])]
+                )
+            
             nodes_to_launch.append(pose_tf_node)
+            nodes_to_launch.append(waypoint_tf_node)
 
     return nodes_to_launch
 

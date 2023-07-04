@@ -2,7 +2,15 @@
     "info" : [
         {
             "uri": "radio://0/80/2M/E7",
-            "initial_pose": [0.0, -0.4, 0.0, 0.0]
+            "initial_pose": [0.0, 0.0, 0.0, 0.0]
+        },
+        {
+            "uri": "radio://0/80/2M/E8",
+            "initial_pose": [0.0, 0.4, 0.0, -1.57]
+        },
+        {
+            "uri": "radio://0/80/2M/E9",
+            "initial_pose": [-0.3, -0.3, 0.0, 0.0]
         }
     ]
 }
