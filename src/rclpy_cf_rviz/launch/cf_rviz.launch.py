@@ -16,17 +16,9 @@ def launch_setup():
             package='rviz2', executable='rviz2',
             name='cf_rviz_node')
 
-    logging_launch = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            [FindPackageShare("rclpy_cf_rviz"), "/launch", "/logging.launch.py"]
-        )
-    )
-
     nodes_to_start = []
     if rviz["anything"]:
         nodes_to_start.append(rviz_launch)
-        if rviz["logging"]:
-            nodes_to_start.append(logging_launch)
 
     return nodes_to_start
 

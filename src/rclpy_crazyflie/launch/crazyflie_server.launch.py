@@ -7,20 +7,25 @@ import json
 with open('install/rclpy_crazyflie/share/rclpy_crazyflie/data/uris.json') as f:
     data = json.load(f)
     uris = [agent["uri"] for agent in data["info"]]
+    poses = [agent["initial_pose"] for agent in data["info"]]
     f.close()
 
 with open('install/rclpy_crazyflie/share/rclpy_crazyflie/data/info.json') as f:
     data = json.load(f)
     log = data["logging"]
+    global_coords = data["coordinates"]["global"]
+    lighthouse = data["coordinates"]["lighthouse"]
 
-def generate_launch_description():
-    return launch.LaunchDescription([
-        launch_ros.actions.Node(
+def launch_server():
+    nodes_to_launch = []
+
+    nodes_to_launch.append(launch_ros.actions.Node(
             package='rclpy_crazyflie', executable='server',
             name='server_node',
             parameters=[
                 {
                 'uris': uris,
+                'lighthouse': lighthouse,
                 'log_rpy_rate': log['log_rpy_rate'],
                 'log_rpyt': log['log_rpyt'],
                 'log_se': log['log_se'],
@@ -30,4 +35,28 @@ def generate_launch_description():
                 'log_sta': log['log_sta']
                 }
             ])
-    ])
+        )
+    
+    if global_coords and not lighthouse:
+        for (uri, pose) in zip(uris, poses):
+            pose_tf_node = \
+                launch_ros.actions.Node(
+                package='rclpy_crazyflie', executable='pose_transform',
+                name='pose_tf_' + uri.split('/')[-1],
+                arguments=[uri.split('/')[-1], str(pose[0]), str(pose[1]), str(pose[2]), str(pose[3])]
+                )
+            
+            waypoint_tf_node = \
+                launch_ros.actions.Node(
+                package='rclpy_crazyflie', executable='waypoint_transform',
+                name='waypoint_tf_' + uri.split('/')[-1],
+                arguments=[uri.split('/')[-1], str(pose[0]), str(pose[1]), str(pose[2]), str(pose[3])]
+                )
+            
+            nodes_to_launch.append(pose_tf_node)
+            nodes_to_launch.append(waypoint_tf_node)
+
+    return nodes_to_launch
+
+def generate_launch_description():
+    return launch.LaunchDescription(launch_server())

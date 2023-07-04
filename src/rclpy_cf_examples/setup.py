@@ -25,7 +25,8 @@ setup(
     entry_points={
         'console_scripts': [
             'random_movement = rclpy_cf_examples.random_movement:main',
-            'position_control = rclpy_cf_examples.position_control:main'
+            'position_control = rclpy_cf_examples.position_control:main',
+            'lighthouse_position_control = rclpy_cf_examples.lighthouse_position_control:main'
         ],
     },
 )
