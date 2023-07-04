@@ -11,15 +11,19 @@ from geometry_msgs.msg import PointStamped, PoseStamped
 from cf_msgs.msg import HoverStamped, FlyStamped, PositionStamped, StateEstimate
 
 waypoints = np.array([[1.0,  0.0,  1.0],
-                      [1.0,  1.0,  1.0],
-                      [-1.0, 1.0,  0.4],
-                      [1.0,  -1.0,  0.4],
-                      [1.0,  1.0,  1.3],
-                      [-1.0, 1.0,  1.3],
-                      [-1.0,  1.0,  1.0],
-                      [1.0, 1.0,  1.0],
-                      [1.0,  1.0,  0.9],
-                      [-1.0, 1.0,  0.9]])
+                      [1.0,  0.5,  1.0],
+                      [-1.0, 0.5,  0.4],
+                      [1.0,  -0.8,  0.4],
+                      [0.0,  0.0,  1.3],
+                      [-0.5, 0.5,  1.3],
+                      [0.5, 1.0, 0.6],
+                      [1.0,  0.0,  1.0],
+                      [1.0,  0.5,  1.0],
+                      [-1.0, 0.5,  0.4],
+                      [1.0,  -0.8,  0.4],
+                      [0.0,  0.0,  1.3],
+                      [-0.5, 0.5,  1.3],
+                      [0.5, 1.0, 0.6]])
 
 class PositionControlCallBackGroup(CallbackGroup):
     def __init__(self):
@@ -49,13 +53,13 @@ class PositionControl(Node):
 
         self.cb_group = PositionControlCallBackGroup()
 
-        self.position_pub = self.create_publisher(PointStamped, self._name + '/control/position/local', 10)
+        self.position_pub = self.create_publisher(PointStamped, self._name + '/control/position/global', 10)
         self.pose_sub = self.create_subscription(PoseStamped, self._name + '/pose/global', self.pose_cb, 10)
         
     def waypoint_select(self, at):
         if not at:
             return self.obj
-        time.sleep(2)
+        time.sleep(0.5)
         self.waypoints = np.delete(self.waypoints, 0, axis=0)
         self.obj = None if not len(self.waypoints) else self.waypoints[0].reshape((3,1))
 

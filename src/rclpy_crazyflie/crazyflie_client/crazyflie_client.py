@@ -18,10 +18,10 @@ class CrazyflieClient(Node):
     def __init__(self):
         super().__init__('client_node')
         self.declare_parameter('uri', '')
-        self.declare_parameter('global_coords', False)
+        self.declare_parameter('lighthouse', False)
         uri = self.get_parameter('uri').get_parameter_value().string_value
         self._name = uri.split('/')[-1]
-        self._global_coords = self.get_parameter('global_coords').get_parameter_value().bool_value
+        self._lighthouse = self.get_parameter('lighthouse').get_parameter_value().bool_value
 
         self.send_hover_setpoint_client = self.create_client(SendHoverSetpoint, self._name + '/send_hover_setpoint')
         self.reset_position_estimator_client = self.create_client(ResetPositionEstimator, self._name + '/reset_position_estimator')
@@ -34,10 +34,16 @@ class CrazyflieClient(Node):
         self.connection_callback_group = ConnectionCallbackGroup(self._name)
         self.connection_sub = self.create_subscription(Bool, self._name + '/connection', self.connection_callback_group, 10)
         self.velocity_control_sub = self.create_subscription(FlyStamped, self._name + '/control/velocity', self.velocity_cb, 10, callback_group=self.connection_callback_group)
-        self.position_control_sub = self.create_subscription(PointStamped, self._name + '/control/position/local', self.position_cb, 10, callback_group=self.connection_callback_group)
         self.hover_sub = self.create_subscription(HoverStamped, self._name + '/control/hover', self.hover_cb, 10, callback_group=self.connection_callback_group)
         self.take_off_sub = self.create_subscription(Float32, self._name + '/control/take_off', self.take_off_cb, 10, callback_group=self.connection_callback_group)
         self.land_sub = self.create_subscription(Float32, self._name + '/control/land', self.land_cb, 10, callback_group=self.connection_callback_group)
+        self.position_control_sub = self.create_subscription(
+            PointStamped, 
+            self._name + '/control/position/local' if not self._lighthouse else self._name + '/control/position/global', 
+            self.position_cb, 10, 
+            callback_group=self.connection_callback_group
+        )
+
 
         while not self.send_hover_setpoint_client.wait_for_service(timeout_sec=1.0):
             if self.SERVICE_MESSAGES:
