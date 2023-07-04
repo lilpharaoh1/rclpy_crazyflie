@@ -80,7 +80,7 @@ You can also launch one of the examples in another terminal
 ```bash
 cd ~/crazyflie_ws
 source install/setup.bash
-ros2 launch rclpy_cf_examples [EXAMPLE-LAUNCH-FILE] # ex. position_control
+ros2 run rclpy_cf_examples [EXAMPLE-LAUNCH-FILE] [URI] # ex. position_control E7E7E7E7E7
 ```
 
 Finally, you can visualise the movement of data through active nodes by using `rqt_graph`. This can be done by using the following command and navigating the GUI.
