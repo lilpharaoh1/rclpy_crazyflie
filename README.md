@@ -2,7 +2,7 @@
 
 ## High-Level
 
-This library is made so as to developers an easy "plug-and-play" way to interact with the Crazyflie API using ROS2. This repo should be especially useful to those who are new to ROS2. The intention of the library is to operate similarly to other pkgs such as [ros_can](""). Essentially a user can just subscribe to logging topics and publish simple drive commands to the robot, with the library handling all the interfacing with the Crazyflie API. 
+This library is made so as to developers an easy "plug-and-play" way to interact with the Crazyflie API using ROS2. This repo should be especially useful to those who are new to ROS2. The intention of the library is to operate similarly to other pkgs such as ros_can. Essentially a user can just subscribe to logging topics and publish simple drive commands to the robot, with the library handling all the interfacing with the Crazyflie API. 
 
 The Crazyflie server ( `rclpy_crazyflie/crazyflie_server` ) handles connection, logging and control of the drone swarm. The Crazyflie client ( `rclpy_crazyflie/crazyflie_client` ) handles requests from the user to the Crazyflie server. The Crazyflie RViz package ( `rclpy_cf_rviz` ) simply handles the conversion of internal Crazyflie messages ( `cf_msgs` ) to more RViz-compatible ROS2 messages. It also handles how these messages are displayed. 
 
