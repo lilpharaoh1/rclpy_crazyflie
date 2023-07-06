@@ -19,8 +19,8 @@ The Crazyflie server ( `rclpy_crazyflie/crazyflie_server` ) handles connection, 
 * Oracle VM VirtualBox ( optional )
 
 ## Installation
-A VM image for this project can be found at [here]("https://github.com/lilpharaoh1/rclpy_crazyflie/releases"). This image has all the required packages pre-installed and setup. Export this image to Oracle VM VirtualBox preferably.
-If you would prefer to set up the packages yourself, the setup instructions for cflib can be found [here]("https://www.bitcraze.io/documentation/repository/crazyflie-lib-python/master/installation/install/") and the ROS2 Galactic installation guide can be found [here]("http://docs.ros.org/en/galactic/Installation/Ubuntu-Install-Debians.html").
+A VM image for this project can be found at [here](https://github.com/lilpharaoh1/rclpy_crazyflie/releases). This image has all the required packages pre-installed and setup. Export this image to Oracle VM VirtualBox preferably.
+If you would prefer to set up the packages yourself, the setup instructions for cflib can be found [here](https://www.bitcraze.io/documentation/repository/crazyflie-lib-python/master/installation/install/) and the ROS2 Galactic installation guide can be found [here](http://docs.ros.org/en/galactic/Installation/Ubuntu-Install-Debians.html).
 
 ## General ROS2 advice ( for beginners )
 Everytime you open a new terminal and would like to use ROS2 commands, you will need to source the ROS2 setup.bash file. This can be done by using the command below.
